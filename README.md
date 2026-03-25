@@ -1,2 +1,3 @@
 # Pingpong
-You can play ping pong game in godot editor by using this script.
+You can play a ping-pong game in the Godot editor using this script.
+reload the Scene before playing.
