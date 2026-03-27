@@ -4,10 +4,10 @@ extends Node2D
 
 @export_group("Menu")
 @export_tool_button("New game","PlayScene")
-var permainan_baru = Callable(self,"new_game")
+var new_gams = Callable(self,"new_game")
 
 @export_tool_button("Pause / Continue","Stop")
-var jeda = Callable(self,"pause_game")
+var pause = Callable(self,"pause_game")
 
 @export_group("Interaction")
 @export_tool_button("A","Node")
@@ -15,13 +15,13 @@ var a = Callable(self,"new_match")
 
 @export_group("Input")
 @export_tool_button("Top","ControlAlignTopWide")
-var atas = Callable(self,"change_direction").bind("top")
+var top = Callable(self,"change_direction").bind("top")
 
 @export_tool_button("stop","ControlAlignHCenterWide")
-var diam = Callable(self,"change_direction").bind("stop")
+var stop = Callable(self,"change_direction").bind("stop")
 
 @export_tool_button("Down","ControlAlignBottomWide")
-var bawah = Callable(self,"change_direction").bind("down")
+var down = Callable(self,"change_direction").bind("down")
 
 
 var timer = Timer.new()
