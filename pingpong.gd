@@ -4,7 +4,7 @@ extends Node2D
 
 @export_group("Menu")
 @export_tool_button("New game","PlayScene")
-var new_gams = Callable(self,"new_game")
+var game = Callable(self,"new_game")
 
 @export_tool_button("Pause / Continue","Stop")
 var pause = Callable(self,"pause_game")
