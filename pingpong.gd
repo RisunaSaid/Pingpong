@@ -26,21 +26,26 @@ var bawah = Callable(self,"change_direction").bind("down")
 
 var timer = Timer.new()
 
-var width = 400
-var height= 200
+var width = 500
+var height= 250
+var thickness = 2
 
-var player = Node2D.new()
-var enemy = Node2D.new()
-var ball = Node2D.new()
+var player : Vector2
+var enemy : Vector2
+var ball : Vector2
 
 var player_dir = Vector2.ZERO
 var enemy_dir = Vector2.ZERO
 
-var speed = 200
+var move_speed = 200
+
 var ball_speed = Vector2.ZERO
 
-var length = 40
-var thickness = 5
+var speed_x = 300
+var speed_y = 150
+
+var length = 45
+var size = 5
 
 var show_name = true
 
@@ -55,14 +60,12 @@ var score = {
 var show_score = true
 
 func _ready() -> void:
+	randomize()
+	
 	add_child(timer)
 	timer.one_shot = true
 	timer.wait_time = 4
 	timer.timeout.connect(play_game)
-	
-	add_child(player)
-	add_child(enemy)
-	add_child(ball)
 	
 	new_game()
 	
@@ -75,9 +78,9 @@ func new_game():
 	is_over = false
 	show_name = true
 	show_score = false
-	player.position = Vector2(width,0)
-	enemy.position = Vector2(-width,0)
-	ball.position = Vector2.ZERO
+	player = Vector2(abs(width),0)
+	enemy = Vector2(-abs(width),0)
+	ball = Vector2.ZERO
 	
 	score["player"] = 0
 	score["enemy"] = 0
@@ -89,14 +92,14 @@ func new_match():
 		show_name = false
 		show_score = true
 		
-		player.position = Vector2(width,0)
-		enemy.position = Vector2(-width,0)
-		ball.position = Vector2.ZERO
+		player = Vector2(abs(width),0)
+		enemy = Vector2(-abs(width),0)
+		ball = Vector2.ZERO
 		
 		player_dir = Vector2.ZERO
 		enemy_dir = Vector2.ZERO
 		
-		ball_speed = Vector2([-250,250].pick_random(),[randf_range(-200,-210),randf_range(200,210)].pick_random())
+		ball_speed = Vector2([-speed_x,speed_x].pick_random() + randf_range(-30,30),[-speed_y,speed_y].pick_random() + randi_range(-30,30))
 		
 		timer.start()
 
@@ -134,11 +137,11 @@ func _draw() -> void:
 		Vector2(-width,height),
 		Vector2(-width,-height),
 		Vector2(width,-height)
-	],Color.WHITE)
+	],Color.WHITE,thickness)
 	
-	draw_line(Vector2(0,-length) + player.position,Vector2(0,length) + player.position,Color.WHITE,thickness)
-	draw_line(Vector2(0,-length) + enemy.position,Vector2(0,length) + enemy.position,Color.WHITE,thickness)
-	draw_circle(Vector2.ZERO + ball.position,thickness,Color.WHITE)
+	draw_line(Vector2(0,-length) + player,Vector2(0,length) + player,Color.WHITE,size)
+	draw_line(Vector2(0,-length) + enemy,Vector2(0,length) + enemy,Color.WHITE,size)
+	draw_circle(Vector2.ZERO + ball,size,Color.WHITE)
 	
 func change_direction(input):
 	match input:
@@ -154,9 +157,9 @@ var enemy_stop = false
 func _process(delta: float) -> void:
 	if is_playing and !is_paused and !is_over:
 		
-		if abs((enemy.position - ball.position).x) <= 280:
+		if abs((enemy - ball).x) <= 400:
 			if !enemy_stop:
-				if ball.position.y < enemy.position.y:
+				if ball.y < enemy.y:
 					enemy_dir = Vector2(0, 1)
 				else:
 					enemy_dir = Vector2(0, -1)
@@ -165,45 +168,48 @@ func _process(delta: float) -> void:
 		else:
 			enemy_dir = Vector2.ZERO
 		
-		if ball.position.x > 0:
+		if ball.x > 0:
 			enemy_stop = false
 		
-		var player_col = abs((ball.position - player.position))
-		var enemy_col = abs((ball.position - enemy.position))
+		var collider = abs((ball - player)) if ball.x > 0 else abs((ball - enemy))
 		
-		if !is_colliding and ((player_col.x <= thickness and player_col.y <= length) or (enemy_col.x <= thickness and enemy_col.y <= length)):
+		if !is_colliding and (collider.x <= size * 2 and collider.y <= length):
 			is_colliding = true
 			enemy_stop = true
-			ball_speed.x = -ball_speed.x
-			if ball_speed.y > 0:
-				ball_speed.y = randf_range(200,210)
-			else:
-				ball_speed.y = randf_range(-200,-210) 
 			
-		elif is_colliding and (player_col.x >= thickness or enemy_col.x >= thickness):
+			ball_speed.x = -ball_speed.x
+			
+			var speed_bonus = speed_y + abs(collider.y - ball.y / 2)
+			
+			if ball_speed.y > 0:
+				ball_speed.y = speed_bonus
+			else:
+				ball_speed.y = -speed_bonus
+		
+		elif is_colliding and collider.x >= size:
 			is_colliding = false
 		
-		if in_area and abs(ball.position.y) >= height - thickness:
+		if in_area and abs(ball.y) >= height - size * 2:
 			ball_speed.y = -ball_speed.y
 			in_area = false
 		
-		elif !in_area and abs(ball.position.y) <= height - thickness:
+		elif !in_area and abs(ball.y) <= height - size * 2:
 			in_area = true
 			
-		if abs(ball.position.x) >= width + 10:
-			if ball.position.x < 0:
+		if abs(ball.x) >= width + 10:
+			if ball.x < 0:
 				score["player"] += 1
 			else:
 				score["enemy"] += 1
 			is_playing = false
 			is_over = true
-			
-		player.position -= player_dir * speed * delta
-		enemy.position -= enemy_dir * speed * delta
-		ball.position -= ball_speed * delta
 		
-		var clamp_pos = abs(height - length)
-		player.position.y = clamp(player.position.y,-clamp_pos,clamp_pos)
-		enemy.position.y = clamp(enemy.position.y,-clamp_pos,clamp_pos)
+		player -= player_dir * move_speed * delta
+		enemy -= enemy_dir * move_speed * delta
+		ball -= ball_speed * delta
+		
+		var clamp_pos = abs(height - length - thickness / 2)
+		player.y = clamp(player.y,-clamp_pos,clamp_pos)
+		enemy.y = clamp(enemy.y,-clamp_pos,clamp_pos)
 		
 	queue_redraw()
